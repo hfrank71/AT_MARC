@@ -6,25 +6,27 @@ import pymarc
 from pymarc.field import Field
 import difflib
 
-filename = raw_input("Enter the full filename (include the .mrc extension): ")
-print "Processing file '"+filename+"' ..."
+foldername = raw_input("Enter the folder name for your input/output files: ")
+mrcFilename = raw_input("Enter the full filename for MARC records to be processed (include the .mrc extension): ")
+filename = mrcFilename[:-4]
+print "Processing file '"+mrcFilename+"' ..."
 # write validation code that makes sure the filename entered matches the correct pattern of a .mrc filename
 
-#folder = filename[:-4]  	# remove the .mrc extension from the filename; the primary folder name created on the local directory should match the filename
-folder = filename[:-17]		# remove the "_all_3_python.mrc" extension from the filename
-marcRecsIn = pymarc.MARCReader(file(folder+'/input_files/'+filename), to_unicode=True, force_utf8=True)
-marcRecsOut_rejects = pymarc.MARCWriter(file(folder+'/output_files/'+folder+'_rejects.mrc', 'w'))
-marcRecsOut_good = pymarc.MARCWriter(file(folder+'/output_files/'+folder+'_good.mrc', 'w'))
+#folder = filename[:-4]		# remove the .mrc extension from the filename; the primary folder name created on the local directory should match the filename
+#folder = filename[:-17]		# remove the "_all_3_python.mrc" extension from the filename
+marcRecsIn = pymarc.MARCReader(file(foldername+'/input_files/'+mrcFilename), to_unicode=True, force_utf8=True)
+marcRecsOut_rejects = pymarc.MARCWriter(file(foldername+'/output_files/'+filename+'_rejects.mrc', 'w'))
+marcRecsOut_good = pymarc.MARCWriter(file(foldername+'/output_files/'+filename+'_good.mrc', 'w'))
 
 ######################################################################
 ## Method - no008dates
 ## Find records without any value set for the 008 Date1 (bytes 07-10) and write to file
 ######################################################################
-open(folder+'/output_files/'+folder+'_no008dates.txt', 'w').close()	# creates and/or clears the file no008dates.txt
+open(foldername+'/output_files/'+filename+'_no008dates.txt', 'w').close()	# creates and/or clears the file no008dates.txt
 no008datesCount = 0
 def no008dates(rec=None):
 	global no008datesCount
-	no008datesFile = open(folder+'/output_files/'+folder+'_no008dates.txt', 'a')
+	no008datesFile = open(foldername+'/output_files/'+filename+'_no008dates.txt', 'a')
 	if rec:
 		for field008 in rec.get_fields('008'):
 			field008data = field008.value()
@@ -51,11 +53,11 @@ def no008dates(rec=None):
 ## Method - lgAbstracts
 ## Write to file any 520 abstracts that are greater than 1900 characters
 ######################################################################
-open(folder+'/output_files/'+folder+'_lgAbstracts.txt', 'w').close()	# creates and/or clears the file lgAbstractsFile.txt
+open(foldername+'/output_files/'+filename+'_lgAbstracts.txt', 'w').close()	# creates and/or clears the file lgAbstractsFile.txt
 lgAbstractsCount = 0
 def lgAbstracts(rec=None, text=None):
 	global lgAbstractsCount
-	lgAbstractsFile = open(folder+'/output_files/'+folder+'_lgAbstracts.txt', 'a')
+	lgAbstractsFile = open(foldername+'/output_files/'+filename+'_lgAbstracts.txt', 'a')
 	if rec:
 		if lgAbstractsCount == 0:
 			lgAbstractsFile.write("RECORDS HAVING AN ABSTRACT GREATER THAN 1900 CHARACTERS\n------------------------------------------------------------\n\n")
@@ -72,13 +74,13 @@ def lgAbstracts(rec=None, text=None):
 ## Method - noAbstracts
 ## Write to file records having no abstract
 ######################################################################
-open(folder+'/output_files/'+folder+'_noAbstracts.txt', 'w').close()	# creates and/or clears the file noAbstractsFile.txt 
+open(foldername+'/output_files/'+filename+'_noAbstracts.txt', 'w').close()	# creates and/or clears the file noAbstractsFile.txt 
 noAbstractsCount = 0
 noScopesCount = 0
 def noAbstracts(rec=None, hasScope=None):
 	global noAbstractsCount
 	global noScopesCount
-	noAbstractsFile = open(folder+'/output_files/'+folder+'_noAbstracts.txt', 'a')
+	noAbstractsFile = open(foldername+'/output_files/'+filename+'_noAbstracts.txt', 'a')
 	if rec:
 		if noAbstractsCount == 0:
 			noAbstractsFile.write("RECORDS LACKING AN ABSTRACT\n------------------------------------------------------------\n\n")
@@ -106,11 +108,11 @@ def noAbstracts(rec=None, hasScope=None):
 ## Method - noMatch520s
 ## Write to file records having 520s that don't match either the Abstract or the Scope notes
 ######################################################################
-open(folder+'/output_files/'+folder+'_noMatch520s.txt', 'w').close()  # creates and/or clears the file noMatch520s.txt
+open(foldername+'/output_files/'+filename+'_noMatch520s.txt', 'w').close()  # creates and/or clears the file noMatch520s.txt
 noMatch520sCount = 0
 def noMatch520s(rec=None, eadData=None, alt520=None, diffAbstract=None, diffScope=None):
 	global noMatch520sCount
-	noMatch520sFile = open(folder+'/output_files/'+folder+'_noMatch520s.txt', 'a')
+	noMatch520sFile = open(foldername+'/output_files/'+filename+'_noMatch520s.txt', 'a')
 	if rec:
 		if noMatch520sCount == 0:
 			noMatch520sFile.write("RECORDS HAVING A 520 THAT DOES NOT MATCH ABSTRACT OR SCOPE\n------------------------------------------------------------\n\n")
@@ -159,7 +161,7 @@ def normalizeText(text):
 ######################################################################
 def getEADdata(resID):
 	eadData = {}
-	eadFilename = folder+'/input_files/'+folder+'_eadxml/'+resID+'-ead.xml'
+	eadFilename = foldername+'/input_files/eadxml/'+resID+'-ead.xml'
 	eadFile = open(eadFilename, 'r')
 	eadStr = eadFile.read()
 	eadFile.close()
@@ -191,11 +193,11 @@ def getEADdata(resID):
 ## Method - no7XXs
 ## Find records without any name headings and write to file
 ######################################################################
-open(folder+'/output_files/'+folder+'_no7XXs.txt', 'w').close()		# creates and/or clears the file no7XXs.txt
+open(foldername+'/output_files/'+filename+'_no7XXs.txt', 'w').close()		# creates and/or clears the file no7XXs.txt
 no7XXsCount = 0
 def no7XXs(rec=None):
 	global no7XXsCount
-	no7XXsFile = open(folder+'/output_files/'+folder+'_no7XXs.txt', 'a')
+	no7XXsFile = open(foldername+'/output_files/'+filename+'_no7XXs.txt', 'a')
 	if rec:
 		if not rec['700'] and not rec['710']:
 			if no7XXsCount == 0:
@@ -243,6 +245,127 @@ def deDup7XXs(rec=None):
 	for add7XX in add7XXs:
 		rec.add_field(add7XX)
 	return rec
+
+######################################################################
+## Method - get949Codes
+## Get the library location codes depending on the repository code
+######################################################################
+def get949Codes(rec):
+	f852abc = []
+	if rec['003'].value() == 'NyNyUA':
+		f852abc = ['NNU','BOBST','ARCH']
+	elif rec['003'].value() == 'NNU-F':
+		f852abc = ['NNU','BFALE','FALES']
+	elif rec['003'].value() == 'NNU-TL':
+		f852abc = ['NNU','BTAM','TAM']
+	elif rec['003'].value() == 'NyBlHS':
+		f852abc = ['NyBlHS','KBHS','ARMS']
+	else:
+		print 'INVALID LOCATION CODES'
+	return f852abc
+
+######################################################################
+## Method - "human sort" functions - NEED TO ADAPT FOR DICTIONARY OBJECT (not List)
+## Sort the dictionary of box numbers
+######################################################################
+# Source: http://nedbatchelder.com/blog/200712/human_sorting.html
+# Author: Ned Batchelder
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+
+def sort_nicely(l):
+    """ Sort the given list in the way that humans expect.
+    """
+    l.sort(key=alphanum_key)
+    
+######################################################################
+## Method - getMARC863s
+## Get resource ID and 863 fields from MARC XML file
+######################################################################
+open(foldername+'/output_files/'+filename+'_863s.txt', 'w').close()  # creates and/or clears the file 863s.txt
+def getMARC863s(rec=None):
+	f863sFile = open(foldername+'/output_files/'+filename+'_863s.txt', 'a')
+	if rec:
+		f863sFile.write('------------------------------------------------------------\n%s\n' % (rec['099']['a']))
+		f863sFile.write('------------------------------------------------------------\n')
+		
+		#marcData = {}
+		#marcXmlFilename = "marcxml/wag282-marc.xml"
+		marcXmlFilename = foldername+'/input_files/marcxml/'+resID+'-marc.xml'
+		marcXmlFile = open(marcXmlFilename, 'r')
+		marcStr = marcXmlFile.read()
+		marcXmlFile.close()
+		
+		xmlDOM = parseString(marcStr)
+		marcFields = xmlDOM.getElementsByTagName('datafield')
+		field863data = {}
+		for field in marcFields:
+			if field.getAttribute('tag') == '863':
+				boxNum = 0
+				barcodeNum = 0
+				subfields = field.getElementsByTagName('subfield')
+				for subfield in subfields:
+					if subfield.getAttribute('code') == 'a':
+						boxNum = subfield.firstChild.nodeValue
+					if subfield.getAttribute('code') == 'p':
+						barcodeNum = subfield.firstChild.nodeValue
+				if barcodeNum != 0:
+					# field863data[boxNum] = barcodeNum
+					field863data[int(boxNum)] = str(barcodeNum)
+					# Problem: Can't assign and sort non-integer box numbers (e.g., 26b)
+					#  Look into "human sort" functions
+					#  http://stackoverflow.com/questions/3231352/sorting-dicts-contained-in-lists-alphanumerically-in-python
+					#  http://nedbatchelder.com/blog/200712.html#e20071211T054956
+					#  http://stackoverflow.com/questions/2669059/how-to-sort-alpha-numeric-set-in-python
+					# sort_nicely(field863data)
+		
+		for box in sorted(field863data.iterkeys()):
+			f863sFile.write('Box %s - %s\n' % (box, field863data[box]))
+		
+		f863sFile.write('------------------------------------------------------------\nTotal Count of boxes for %s: %s\n' % (rec['099']['a'],len(field863data)))
+		f863sFile.write('------------------------------------------------------------\n\n\n')
+		return field863data
+
+	f863sFile.close()
+
+######################################################################
+## Method - addResID2List
+## Add the resource ID to either the list of GOOD records or REJECTS
+######################################################################
+open(foldername+'/output_files/'+filename+'_goodResIDs.txt', 'w').close()  # creates and/or clears the file goodResIDs.txt
+open(foldername+'/output_files/'+filename+'_rejectsResIDs.txt', 'w').close()  # creates and/or clears the file rejectsResIDs.txt
+goodIDsCount = 0
+rejectIDsCount = 0
+def addResID2List(resID=None, status=None):
+	global goodIDsCount
+	global rejectIDsCount
+	goodResIDsFile = open(foldername+'/output_files/'+filename+'_goodResIDs.txt', 'a')
+	rejectsResIDsFile = open(foldername+'/output_files/'+filename+'_rejectsResIDs.txt', 'a')
+	if resID:
+		if status == 'good':
+			if goodIDsCount == 0:
+				goodResIDsFile.write("List of GOOD Resource IDs\n------------------------------------------------------------\n\n")
+			goodResIDsFile.write("%s\n" % (resID))
+			goodIDsCount += 1
+		elif status == 'rej':
+			if rejectIDsCount == 0:
+				rejectsResIDsFile.write("List of REJECTED Resource IDs\n------------------------------------------------------------\n\n")
+			rejectsResIDsFile.write("%s\n" % (resID))
+			rejectIDsCount += 1
+	else:
+		goodResIDsFile.write("\n------------------------------------------------------------\nTotal Count of GOOD records: %s\n" % (goodIDsCount))
+		rejectsResIDsFile.write("\n------------------------------------------------------------\nTotal Count of REJECTED records: %s\n" % (rejectIDsCount))
+	goodResIDsFile.close()
+	rejectsResIDsFile.close()
 
 ######################################################################
 ##  MAIN SCRIPT
@@ -294,18 +417,53 @@ for record in marcRecsIn:	# Iterate through all records in marcRecsIn
 	if new520scope:
 		record.add_field(new520scope)
 	
+	
 	for field545 in record.get_fields('545'):
-		if len(field545) > 1900:
+		field545a = field545.get_subfields('a')[0]
+		if len(field545a) > 1900:
 			record.remove_field(field545)
 	
 	no7XXs(rec=record)	# if record lacks any 700 or 710 fields, write to file
 	
 	record = deDup7XXs(rec=record)
-			
-	if no008date or noAbstract or abstractTooLg or noMatch520:
+	
+	rec863sDict = getMARC863s(record)	# retrieve a dictionary of valid box/barcode numbers
+	
+	f949abc = get949Codes(record)
+	
+	if len(rec863sDict) > 0:
+		new853 = Field(tag='853', indicators=['0','0'], subfields=['8','1','a','Box'])
+		record.add_field(new853)
+	
+		for box in sorted(rec863sDict.iterkeys()):
+			barcode = rec863sDict[box]
+			new863 = Field(tag='863', indicators=[' ',' '], subfields=['8','1.'+str(box),'a', str(box),'p', str(barcode)])
+			record.add_field(new863)
+			# NEED TO DESIGNATE THE IPS CODE (949s) - VH for offsite boxes
+			new949 = Field(tag='949', indicators=['0',' '], subfields=['a',f949abc[0],'b',f949abc[1],'c',f949abc[2],'m','ISSMX','i','04','t','4','j',resID,'p',str(barcode),'e',str(box),'d','Box '+str(box)])
+				# 949a = Library
+				# 949b = Sublibrary
+				# 949c = Collection
+				# 949m = Material Type
+				# 949i = Item Status
+				# 949s = Item Process Status - NEED TO FIGURE OUT HOW TO DETERMINE THIS
+				# 949t = Type of Call Number (852-1st indicator)
+				# 949j = Call Number (i.e., Resource ID)
+				# 949p = Item Barcode
+				# 949e = Item Enumeration-A (e.g., 1)
+				# 949d = Item Description (e.g., Box 1)
+			record.add_field(new949)
+	
+	else:
+		new949 = Field(tag='949', indicators=['0',' '], subfields=['a',f949abc[0],'b',f949abc[1],'c',f949abc[2],'m','ISSMX','i','04','t','4','j',resID])
+		record.add_field(new949)
+	
+	if no008date or noAbstract or abstractTooLg:
 		marcRecsOut_rejects.write(record)
+		addResID2List(resID, 'rej')
 	else:
 		marcRecsOut_good.write(record)
+		addResID2List(resID, 'good')
 	
 	recCount +=1
 
@@ -315,7 +473,8 @@ no008dates()	# write the final count of records with no 008 Date1 to the file
 lgAbstracts()	# write the final count of records with a large abstract to the file
 noAbstracts()	# write the final count of records with no abstract to the file
 noMatch520s()	# write the final count of records with a 520 that doesn't match to the file
+addResID2List()	# write the final count of good and rejected records to the ResID files
 
-print str(recCount)+" records were processed in file '"+filename+"'"
+print str(recCount)+" records were processed in file '"+mrcFilename+"'"
 marcRecsOut_rejects.close()
 marcRecsOut_good.close()
